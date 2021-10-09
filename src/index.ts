@@ -2,6 +2,8 @@ import puppeteer from "puppeteer";
 import { extract } from "./functions/extractor";
 import { scroll } from "./functions/scroller";
 import podcasts from "./podcasts.json";
+import fs from "fs";
+import { Video } from "./types";
 
 (async () => {
   const browser = await puppeteer.launch({ headless: false });
@@ -11,16 +13,20 @@ import podcasts from "./podcasts.json";
     height: 800,
   });
 
-  for (const { url } of podcasts) {
+  let videos: Video[] = [];
+
+  for (const { url, name } of podcasts) {
     try {
       await page.goto(`https://www.youtube.com/c/${url}/videos`);
       await page.waitForSelector("#primary");
 
       await scroll(page);
 
-      const videos = await extract(page);
+      const extracted = await extract(page);
 
-      console.log(videos);
+      videos.push(...extracted);
+
+      await fs.writeFileSync("./src/videos.json", JSON.stringify(videos));
     } catch (err) {
       console.log(err);
     }
